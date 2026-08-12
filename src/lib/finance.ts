@@ -512,7 +512,10 @@ function offsetMonth(month: string, delta: number) {
 
 function detectRecurringExpenses(records: ExpenseRecord[], latestMonth: string) {
   const grouped = records.reduce<Record<string, ExpenseRecord[]>>((accumulator, record) => {
-    accumulator[record.vendor] = [...(accumulator[record.vendor] ?? []), record];
+    if (!accumulator[record.vendor]) {
+      accumulator[record.vendor] = [];
+    }
+    accumulator[record.vendor].push(record);
     return accumulator;
   }, {});
 
@@ -578,14 +581,46 @@ export function parseCsv(text: string) {
     return [];
   }
 
-  const headers = headerLine.split(",").map((header) => header.trim());
+  const headers = splitCsvLine(headerLine).map((header) => header.trim());
   return lines.map<ImportPreviewRow>((line) => {
-    const values = line.split(",").map((value) => value.trim());
+    const values = splitCsvLine(line).map((value) => value.trim());
     return headers.reduce<ImportPreviewRow>((accumulator, header, index) => {
       accumulator[header] = values[index] ?? "";
       return accumulator;
     }, {});
   });
+}
+
+function splitCsvLine(line: string) {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    const nextCharacter = line[index + 1];
+
+    if (character === '"') {
+      if (inQuotes && nextCharacter === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (character === "," && !inQuotes) {
+      values.push(current);
+      current = "";
+      continue;
+    }
+
+    current += character;
+  }
+
+  values.push(current);
+  return values;
 }
 
 export function buildImportReview(

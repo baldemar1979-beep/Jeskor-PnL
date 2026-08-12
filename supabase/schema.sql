@@ -1,13 +1,14 @@
+create extension if not exists pgcrypto;
+
 create table if not exists users (
-  id uuid primary key,
+  id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
-  password_hash text not null,
   role text not null check (role in ('Owner', 'Administrator', 'Accountant', 'Bookkeeper', 'View Only')),
   created_at timestamptz not null default now()
 );
 
 create table if not exists accounts (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null,
   account_type text not null,
   institution text,
@@ -16,29 +17,29 @@ create table if not exists accounts (
 );
 
 create table if not exists categories (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null unique,
   category_type text not null check (category_type in ('revenue', 'expense'))
 );
 
 create table if not exists vendors (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null unique,
   default_category_id uuid references categories(id)
 );
 
 create table if not exists drivers (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null
 );
 
 create table if not exists trucks (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   number text not null unique
 );
 
 create table if not exists transactions (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   transaction_date date not null,
   counterparty text not null,
   description text not null,
@@ -58,9 +59,12 @@ create table if not exists transactions (
   notes text,
   created_by uuid references users(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (account_id, source_transaction_id)
+  updated_at timestamptz not null default now()
 );
+
+create unique index if not exists transactions_account_source_transaction_id_idx
+  on transactions (account_id, source_transaction_id)
+  where source_transaction_id is not null;
 
 create table if not exists revenue_records (
   transaction_id uuid primary key references transactions(id) on delete cascade,
@@ -73,7 +77,7 @@ create table if not exists expense_records (
 );
 
 create table if not exists vendor_rules (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   vendor_id uuid references vendors(id),
   match_text text not null,
   category_id uuid references categories(id),
@@ -81,7 +85,7 @@ create table if not exists vendor_rules (
 );
 
 create table if not exists imports (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   file_name text not null,
   imported_at timestamptz not null default now(),
   transaction_count integer not null default 0,
@@ -92,7 +96,7 @@ create table if not exists imports (
 );
 
 create table if not exists payroll_imports (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   import_id uuid references imports(id) on delete cascade,
   gross_payroll numeric(12,2) not null default 0,
   overtime numeric(12,2) not null default 0,
@@ -102,14 +106,14 @@ create table if not exists payroll_imports (
 );
 
 create table if not exists budgets (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   budget_month date not null,
   category_id uuid references categories(id),
   amount numeric(12,2) not null
 );
 
 create table if not exists scenarios (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null,
   assumptions jsonb not null,
   created_by uuid references users(id),
@@ -117,7 +121,7 @@ create table if not exists scenarios (
 );
 
 create table if not exists financial_alerts (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   severity text not null,
   title text not null,
   explanation text not null,
@@ -125,7 +129,7 @@ create table if not exists financial_alerts (
 );
 
 create table if not exists audit_logs (
-  id uuid primary key,
+  id uuid primary key default gen_random_uuid(),
   table_name text not null,
   record_id uuid not null,
   action text not null,

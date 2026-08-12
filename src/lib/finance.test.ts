@@ -61,4 +61,15 @@ describe("import review flow", () => {
       requiresReview: false,
     });
   });
+
+  it("keeps quoted comma values together during csv parsing", () => {
+    const rows = parseCsv(
+      'Date,Vendor,Description,Amount,TransactionID\n2026-08-28,"Smith, John","Dispatch, after hours",-125,new-456',
+    );
+
+    expect(rows[0]).toMatchObject({
+      Vendor: "Smith, John",
+      Description: "Dispatch, after hours",
+    });
+  });
 });
