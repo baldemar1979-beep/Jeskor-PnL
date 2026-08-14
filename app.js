@@ -635,7 +635,6 @@ function populateCategoryFilter(transactions) {
 
 function applyFiltersAndRender() {
   state.filteredTransactions = filterTransactions(state.transactions, readFilters());
-  readPayrollPlan();
   renderIncomePlanner();
   renderDashboard();
 }

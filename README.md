@@ -18,7 +18,7 @@ Starter single-page cashflow calculator for reviewing Chase-style card exports, 
 
 This starter app is fully static and runs client-side only.
 
-1. Open `/home/runner/work/Jeskor-PnL/Jeskor-PnL/index.html` in a browser.
+1. Open `index.html` from the repository root in a browser.
 2. Upload a Chase-style CSV export.
 3. Review the dashboard, summaries, planners, and insights.
 
